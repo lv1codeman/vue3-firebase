@@ -29,6 +29,16 @@ const onDelete = async (row, column, index) => {
 };
 
 // TODO: 编辑功能
+// 打開彈框 > 回填數據 > 更新數據
+// 1. 打開彈框 (獲取子組件實例 > 調用方法或者修改屬性)
+// 2. 回填數據
+// 調用詳情接口/當前行的靜態數據
+const editRef = ref(null);
+const onEdit = (row) => {
+  editRef.value.open(row);
+};
+
+// console.log(editRef.value.book);
 </script>
 
 <template>
@@ -39,7 +49,7 @@ const onDelete = async (row, column, index) => {
       <el-table-column label="籍贯" prop="place"></el-table-column>
       <el-table-column label="操作" width="150">
         <template #default="{ row, column, $index }">
-          <el-button type="primary" link>编辑</el-button>
+          <el-button type="primary" link @click="onEdit(row)">编辑</el-button>
           <el-button type="danger" link @click="onDelete(row, column, $index)"
             >删除</el-button
           >
@@ -47,7 +57,7 @@ const onDelete = async (row, column, index) => {
       </el-table-column>
     </el-table>
   </div>
-  <Edit />
+  <Edit ref="editRef" @on-update="getList" />
 </template>
 
 <style scoped>
