@@ -35,8 +35,8 @@ const filterHandler = (
   row: Agent,
   column: TableColumnCtx<Agent>
 ) => {
-  console.log(value);
-  console.log(column);
+  // console.log(value);
+  // console.log(column);
 
   const property = column["property"];
   return row[property] === value;
@@ -49,18 +49,20 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const agentlist = ref([]);
-const isLoading = ref(false);
 const showData = async () => {
   getAllAgents(db)
     .then((users) => {
-      console.log("取得使用者資料成功：", users);
       const userNum = users.length;
       const msg = `目前資料庫中共有${userNum}位使用者。`;
-
+      console.log("取得使用者資料成功：", users, msg);
+      // users.forEach((user) => {
+      //   user.id = parseInt(user.id);
+      // });
+      // console.log("取得使用者資料成功after parseInt：", typeof users[0].id);
       agentlist.value = users;
-      isLoading.value = true;
-      tableRef.value?.sort("id", "ascending");
-      console.log("showData done.");
+      // tableRef.value?.sort("id", "descending");
+      // console.log("showData done.");
+      loading.value = false;
     })
     .catch((error) => {
       console.error("取得使用者資料失敗：", error);
@@ -104,8 +106,6 @@ const onDelete = async (row, column, index) => {
 
   await deleteDoc(doc(db, "agents", row.id.toString()));
   showData();
-  // await axios.delete(`del/${row.id}`);
-  // getList();
 };
 
 // TODO: 编辑功能
@@ -131,30 +131,34 @@ const defaultSort = {
   order: "ascending", // 排序顺序
 };
 
-const handleDataUpdate = (newData) => {
-  console.log("table data changed!!!");
-  // 在数据更新时手动触发排序
-  nextTick(() => {
-    console.log("在数据更新时手动触发排序");
+const handleDataUpdate = async (newData) => {
+  console.log("table data changed!!!", newData.prop);
+  tableRef.value?.sort(newData.prop, newData.order);
+};
 
-    tableRef.value?.sort("id", "ascending");
-  });
+const loading = ref(true);
+
+const sortTable = () => {
+  tableRef.value?.sort("id", "ascending");
 };
 </script>
 
 <template>
+  <el-button @click="sortTable" type="primary" plain>sortTable</el-button>
   <el-button @click="showData" type="primary" plain>showData</el-button>
-  <div class="app" v-if="isLoading">
+  <!-- @sort-change="handleDataUpdate" -->
+  <!-- :default-sort="defaultSort" -->
+  <div class="app">
     <el-button @click="addNewAgent" type="primary" plain>Add agent</el-button>
     <el-table
       ref="tableRef"
+      v-loading="loading"
       :data="agentlist"
       style="width: 100%"
-      stripe
       border
+      stripe
       height="500"
       :default-sort="defaultSort"
-      @update:data="handleDataUpdate"
     >
       <el-table-column fixed label="ID" prop="id" sortable></el-table-column>
       <el-table-column
@@ -209,21 +213,6 @@ const handleDataUpdate = (newData) => {
       </el-table-column>
     </el-table>
   </div>
-  <!-- <div class="app">
-    <el-table :data="list">
-      <el-table-column label="ID" prop="id"></el-table-column>
-      <el-table-column label="姓名" prop="name" width="150"></el-table-column>
-      <el-table-column label="籍贯" prop="place"></el-table-column>
-      <el-table-column label="操作" width="150">
-        <template #default="{ row, column, $index }">
-          <el-button type="primary" link>编辑</el-button>
-          <el-button type="danger" link @click="onDelete(row, column, $index)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
-  </div> -->
   <Edit ref="editRef" @on-update="getList" @on-create="addone" />
 </template>
 
