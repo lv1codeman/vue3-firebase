@@ -1,15 +1,16 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, watch, nextTick } from "vue";
 import Edit from "./components/Edit.vue";
 import axios from "axios";
 import { onMounted } from "vue";
 
-import { getAllAgents } from "./assets/js/getAgents";
-import { addAgent } from "./assets/js/setAgent";
-
 import firebaseConfig from "./assets/js/getFirebaseConfig";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+
+import { getAllAgents } from "./assets/js/getAgents";
+import { addAgent } from "./assets/js/setAgent";
+import { doc, deleteDoc } from "firebase/firestore";
 
 import type { TableColumnCtx, TableInstance } from "element-plus";
 
@@ -55,9 +56,25 @@ const showData = async () => {
       console.log("取得使用者資料成功：", users);
       const userNum = users.length;
       const msg = `目前資料庫中共有${userNum}位使用者。`;
-      console.log(msg);
+
       agentlist.value = users;
       isLoading.value = true;
+      tableRef.value?.sort("id", "ascending");
+      console.log("showData done.");
+    })
+    .catch((error) => {
+      console.error("取得使用者資料失敗：", error);
+    });
+};
+
+const addone = async (data) => {
+  console.log("create done.", data);
+  getAllAgents(db)
+    .then((users) => {
+      console.log("取得使用者資料成功：", users);
+      console.log("取得使用者資料成功：", users.length.toString());
+      addAgent(db, data, (users.length + 1).toString());
+      showData();
     })
     .catch((error) => {
       console.error("取得使用者資料失敗：", error);
@@ -81,13 +98,14 @@ onMounted(() => {
 // 獲取當前行的id > 通過id調用刪除接口 > 更新最新的列表
 
 const onDelete = async (row, column, index) => {
-  console.log("sss");
   console.log(row);
   console.log(column);
   console.log(index);
 
-  await axios.delete(`del/${row.id}`);
-  getList();
+  await deleteDoc(doc(db, "agents", row.id.toString()));
+  showData();
+  // await axios.delete(`del/${row.id}`);
+  // getList();
 };
 
 // TODO: 编辑功能
@@ -95,23 +113,48 @@ const onDelete = async (row, column, index) => {
 // 1. 打開彈框 (獲取子組件實例 > 調用方法或者修改屬性)
 // 2. 回填數據
 // 調用詳情接口/當前行的靜態數據
-// const editRef = ref(null);
-// const onEdit = (row) => {
-//   editRef.value.open(row);
-// };
+const editRef = ref(null);
+const onEdit = (row) => {
+  (editRef.value as any).open(row);
+  console.log(editRef.value);
+};
 
-// console.log(editRef.value.book);
+const addNewAgent = () => {
+  console.log("add agent clicked.");
+  (editRef.value as any).create();
+  console.log(editRef.value);
+};
+
+const defaultSort = {
+  // 默认排序配置
+  prop: "id", // 列字段
+  order: "ascending", // 排序顺序
+};
+
+const handleDataUpdate = (newData) => {
+  console.log("table data changed!!!");
+  // 在数据更新时手动触发排序
+  nextTick(() => {
+    console.log("在数据更新时手动触发排序");
+
+    tableRef.value?.sort("id", "ascending");
+  });
+};
 </script>
 
 <template>
-  <button @click="showData">showData</button>
+  <el-button @click="showData" type="primary" plain>showData</el-button>
   <div class="app" v-if="isLoading">
+    <el-button @click="addNewAgent" type="primary" plain>Add agent</el-button>
     <el-table
       ref="tableRef"
       :data="agentlist"
       style="width: 100%"
+      stripe
+      border
       height="500"
-      :default-sort="{ prop: 'id', order: 'ascending' }"
+      :default-sort="defaultSort"
+      @update:data="handleDataUpdate"
     >
       <el-table-column fixed label="ID" prop="id" sortable></el-table-column>
       <el-table-column
@@ -158,7 +201,7 @@ const onDelete = async (row, column, index) => {
       ></el-table-column>
       <el-table-column fixed="right" label="操作" width="120">
         <template #default="{ row, column, $index }">
-          <el-button type="primary" link>编辑</el-button>
+          <el-button type="primary" link @click="onEdit(row)">编辑</el-button>
           <el-button type="danger" link @click="onDelete(row, column, $index)"
             >删除</el-button
           >
@@ -166,7 +209,7 @@ const onDelete = async (row, column, index) => {
       </el-table-column>
     </el-table>
   </div>
-  <div class="app">
+  <!-- <div class="app">
     <el-table :data="list">
       <el-table-column label="ID" prop="id"></el-table-column>
       <el-table-column label="姓名" prop="name" width="150"></el-table-column>
@@ -180,8 +223,8 @@ const onDelete = async (row, column, index) => {
         </template>
       </el-table-column>
     </el-table>
-  </div>
-  <Edit ref="editRef" @on-update="getList" />
+  </div> -->
+  <Edit ref="editRef" @on-update="getList" @on-create="addone" />
 </template>
 
 <style scoped>
