@@ -58,11 +58,22 @@ const showData = async () => {
       // users.forEach((user) => {
       //   user.id = parseInt(user.id);
       // });
-      // console.log("取得使用者資料成功after parseInt：", typeof users[0].id);
-      agentlist.value = users;
-      // tableRef.value?.sort("id", "descending");
+      console.log("取得使用者資料成功after parseInt：", typeof users[0].id);
+
+      //https://juejin.cn/post/7266986461102997539
+      //動態數據渲染el-table時，default-sort會失效
+      //在setTimeout中調用nextTick()確認資料都掛載後才執行sortTable()
+      setTimeout(async function () {
+        agentlist.value = users;
+        console.log(agentlist.value);
+        await nextTick();
+        // sortTable();
+        tableRef.value?.sort("id", "descending");
+        loading.value = false;
+      }, 200);
       // console.log("showData done.");
-      loading.value = false;
+
+      // tableRef.value?.sort("id", "ascending");
     })
     .catch((error) => {
       console.error("取得使用者資料失敗：", error);
@@ -77,6 +88,7 @@ const addone = async (data) => {
       console.log("取得使用者資料成功：", users.length.toString());
       addAgent(db, data, (users.length + 1).toString());
       showData();
+      // sortTable();
     })
     .catch((error) => {
       console.error("取得使用者資料失敗：", error);
@@ -95,6 +107,7 @@ const getList = async () => {
 onMounted(() => {
   getList();
   showData();
+  tableRef.value?.sort("id", "ascending");
 });
 // TODO: 删除功能
 // 獲取當前行的id > 通過id調用刪除接口 > 更新最新的列表
@@ -138,15 +151,19 @@ const handleDataUpdate = async (newData) => {
 
 const loading = ref(true);
 
-const sortTable = () => {
-  tableRef.value?.sort("id", "ascending");
+const sortTable = async () => {
+  tableRef.value?.sort("id", "descending");
 };
+
+const sortID = (a, b) => a.id - b.id;
 </script>
 
 <template>
   <el-button @click="sortTable" type="primary" plain>sortTable</el-button>
   <el-button @click="showData" type="primary" plain>showData</el-button>
   <!-- @sort-change="handleDataUpdate" -->
+  <!-- sortable="custom" -->
+
   <!-- :default-sort="defaultSort" -->
   <div class="app">
     <el-button @click="addNewAgent" type="primary" plain>Add agent</el-button>
@@ -158,12 +175,19 @@ const sortTable = () => {
       border
       stripe
       height="500"
-      :default-sort="defaultSort"
     >
-      <el-table-column fixed label="ID" prop="id" sortable></el-table-column>
+      <el-table-column
+        fixed
+        label="ID"
+        prop="id"
+        width="75px"
+        sortable
+        :sort-method="sortID"
+      ></el-table-column>
       <el-table-column
         label="學院"
         prop="college"
+        width="110px"
         sortable
         :filters="[
           { text: '教育學院', value: '教育學院' },
@@ -178,29 +202,47 @@ const sortTable = () => {
       ></el-table-column>
       <el-table-column
         label="學院全名"
+        width="110px"
         prop="collegeFullName"
         sortable
       ></el-table-column>
       <el-table-column label="系所" prop="dept" sortable></el-table-column>
       <el-table-column
         label="系所全名"
+        width="160px"
         prop="deptFullName"
         sortable
       ></el-table-column>
-      <el-table-column label="承辦人" prop="agent" sortable></el-table-column>
-      <el-table-column label="承辦人Email" prop="agentEmail"></el-table-column>
-      <el-table-column label="承辦人分機" prop="agentExt"></el-table-column>
+      <el-table-column
+        label="承辦人"
+        width="100px"
+        prop="agent"
+        sortable
+      ></el-table-column>
+      <el-table-column
+        label="承辦人Email"
+        width="200px"
+        prop="agentEmail"
+      ></el-table-column>
+      <el-table-column
+        label="承辦人分機"
+        width="110px"
+        prop="agentExt"
+      ></el-table-column>
       <el-table-column
         label="課務組承辦人"
+        width="140px"
         prop="curriAgent"
         sortable
       ></el-table-column>
       <el-table-column
         label="課務組承辦人Email"
+        width="200px"
         prop="curriAgentEmail"
       ></el-table-column>
       <el-table-column
         label="課務組承辦人分機"
+        width="140px"
         prop="curriAgentExt"
       ></el-table-column>
       <el-table-column fixed="right" label="操作" width="120">
@@ -219,6 +261,6 @@ const sortTable = () => {
 <style scoped>
 .app {
   width: 980px;
-  margin: 100px auto 0;
+  margin: 20px auto;
 }
 </style>
