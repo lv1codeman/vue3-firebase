@@ -4,16 +4,45 @@ import Edit from "./components/Edit.vue";
 import axios from "axios";
 import { onMounted } from "vue";
 
+import { getAllAgents } from "./assets/js/getAgents";
+import { addAgent } from "./assets/js/setAgent";
+
+import firebaseConfig from "./assets/js/getFirebaseConfig";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const agentlist = ref([]);
+const isLoading = ref(false);
+const showData = async () => {
+  getAllAgents(db)
+    .then((users) => {
+      console.log("取得使用者資料成功：", users);
+      const userNum = users.length;
+      const msg = `目前資料庫中共有${userNum}位使用者。`;
+      console.log(msg);
+      agentlist.value = users;
+      isLoading.value = true;
+    })
+    .catch((error) => {
+      console.error("取得使用者資料失敗：", error);
+    });
+};
+
 // TODO: 列表渲染
 // 聲明響應式list > 調用接口獲取數據 > 後端數據賦值給list > 綁訂到table組件
 const list = ref([]);
 const getList = async () => {
   const res = await axios.get("/list");
+  console.log(res);
   list.value = res.data;
 };
 
 onMounted(() => {
   getList();
+  showData();
 });
 // TODO: 删除功能
 // 獲取當前行的id > 通過id調用刪除接口 > 更新最新的列表
@@ -42,6 +71,39 @@ const onEdit = (row) => {
 </script>
 
 <template>
+  <button @click="showData">showData</button>
+  <div class="app" v-if="isLoading">
+    <el-table :data="agentlist" style="width: 100%" height="500">
+      <el-table-column fixed label="ID" prop="id" sortable></el-table-column>
+      <el-table-column label="學院" prop="college"></el-table-column>
+      <el-table-column
+        label="學院全名"
+        prop="collegeFullName"
+      ></el-table-column>
+      <el-table-column label="系所" prop="dept"></el-table-column>
+      <el-table-column label="系所全名" prop="deptFullName"></el-table-column>
+      <el-table-column label="承辦人" prop="agent"></el-table-column>
+      <el-table-column label="承辦人Email" prop="agentEmail"></el-table-column>
+      <el-table-column label="承辦人分機" prop="agentExt"></el-table-column>
+      <el-table-column label="課務組承辦人" prop="curriAgent"></el-table-column>
+      <el-table-column
+        label="課務組承辦人Email"
+        prop="curriAgentEmail"
+      ></el-table-column>
+      <el-table-column
+        label="課務組承辦人分機"
+        prop="curriAgentExt"
+      ></el-table-column>
+      <el-table-column fixed="right" label="操作" width="120">
+        <template #default="{ row, column, $index }">
+          <el-button type="primary" link @click="onEdit(row)">编辑</el-button>
+          <el-button type="danger" link @click="onDelete(row, column, $index)"
+            >删除</el-button
+          >
+        </template>
+      </el-table-column>
+    </el-table>
+  </div>
   <div class="app">
     <el-table :data="list">
       <el-table-column label="ID" prop="id"></el-table-column>
