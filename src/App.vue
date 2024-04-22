@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import { ref } from "vue";
 import Edit from "./components/Edit.vue";
 import axios from "axios";
@@ -10,6 +10,39 @@ import { addAgent } from "./assets/js/setAgent";
 import firebaseConfig from "./assets/js/getFirebaseConfig";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+
+import type { TableColumnCtx, TableInstance } from "element-plus";
+
+interface Agent {
+  id: string;
+  dept: string;
+  deptFullName: string;
+  college: string;
+  collegeFullName: string;
+  agent: string;
+  agentEmail: string;
+  agentExt: string;
+  curriAgent: string;
+  curriAgentEmail: string;
+  curriAgentExt: string;
+}
+
+const tableRef = ref<TableInstance>();
+
+const filterHandler = (
+  value: string,
+  row: Agent,
+  column: TableColumnCtx<Agent>
+) => {
+  console.log(value);
+  console.log(column);
+
+  const property = column["property"];
+  return row[property] === value;
+};
+// const formatter = (row: Agent, column: TableColumnCtx<Agent>) => {
+//   return row.dept;
+// };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -62,10 +95,10 @@ const onDelete = async (row, column, index) => {
 // 1. 打開彈框 (獲取子組件實例 > 調用方法或者修改屬性)
 // 2. 回填數據
 // 調用詳情接口/當前行的靜態數據
-const editRef = ref(null);
-const onEdit = (row) => {
-  editRef.value.open(row);
-};
+// const editRef = ref(null);
+// const onEdit = (row) => {
+//   editRef.value.open(row);
+// };
 
 // console.log(editRef.value.book);
 </script>
@@ -73,19 +106,48 @@ const onEdit = (row) => {
 <template>
   <button @click="showData">showData</button>
   <div class="app" v-if="isLoading">
-    <el-table :data="agentlist" style="width: 100%" height="500">
+    <el-table
+      ref="tableRef"
+      :data="agentlist"
+      style="width: 100%"
+      height="500"
+      :default-sort="{ prop: 'id', order: 'ascending' }"
+    >
       <el-table-column fixed label="ID" prop="id" sortable></el-table-column>
-      <el-table-column label="學院" prop="college"></el-table-column>
+      <el-table-column
+        label="學院"
+        prop="college"
+        sortable
+        :filters="[
+          { text: '教育學院', value: '教育學院' },
+          { text: '文學院', value: '文學院' },
+          { text: '理學院', value: '理學院' },
+          { text: '科技學院', value: '科技學院' },
+          { text: '工學院', value: '工學院' },
+          { text: '管理學院', value: '管理學院' },
+          { text: '社科體院', value: '社科體院' },
+        ]"
+        :filter-method="filterHandler"
+      ></el-table-column>
       <el-table-column
         label="學院全名"
         prop="collegeFullName"
+        sortable
       ></el-table-column>
-      <el-table-column label="系所" prop="dept"></el-table-column>
-      <el-table-column label="系所全名" prop="deptFullName"></el-table-column>
-      <el-table-column label="承辦人" prop="agent"></el-table-column>
+      <el-table-column label="系所" prop="dept" sortable></el-table-column>
+      <el-table-column
+        label="系所全名"
+        prop="deptFullName"
+        sortable
+      ></el-table-column>
+      <el-table-column label="承辦人" prop="agent" sortable></el-table-column>
       <el-table-column label="承辦人Email" prop="agentEmail"></el-table-column>
       <el-table-column label="承辦人分機" prop="agentExt"></el-table-column>
-      <el-table-column label="課務組承辦人" prop="curriAgent"></el-table-column>
+      <el-table-column
+        label="課務組承辦人"
+        prop="curriAgent"
+        sortable
+      ></el-table-column>
       <el-table-column
         label="課務組承辦人Email"
         prop="curriAgentEmail"
@@ -96,7 +158,7 @@ const onEdit = (row) => {
       ></el-table-column>
       <el-table-column fixed="right" label="操作" width="120">
         <template #default="{ row, column, $index }">
-          <el-button type="primary" link @click="onEdit(row)">编辑</el-button>
+          <el-button type="primary" link>编辑</el-button>
           <el-button type="danger" link @click="onDelete(row, column, $index)"
             >删除</el-button
           >
@@ -111,7 +173,7 @@ const onEdit = (row) => {
       <el-table-column label="籍贯" prop="place"></el-table-column>
       <el-table-column label="操作" width="150">
         <template #default="{ row, column, $index }">
-          <el-button type="primary" link @click="onEdit(row)">编辑</el-button>
+          <el-button type="primary" link>编辑</el-button>
           <el-button type="danger" link @click="onDelete(row, column, $index)"
             >删除</el-button
           >
