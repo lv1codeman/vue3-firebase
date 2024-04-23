@@ -2,6 +2,7 @@
 import { ref, watch, nextTick } from "vue";
 import Edit from "./components/Edit.vue";
 import Test from "./components/Test.vue";
+import progressView from "./components/progressView.vue";
 import axios from "axios";
 import { onMounted } from "vue";
 
@@ -10,7 +11,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 import { getAllAgents } from "./assets/js/getAgents";
-import { addAgent } from "./assets/js/setAgent";
+import { addAgent, updateAgent } from "./assets/js/setAgent";
 import { doc, deleteDoc } from "firebase/firestore";
 
 import type { TableColumnCtx, TableInstance } from "element-plus";
@@ -36,15 +37,9 @@ const filterHandler = (
   row: Agent,
   column: TableColumnCtx<Agent>
 ) => {
-  // console.log(value);
-  // console.log(column);
-
   const property = column["property"];
   return row[property] === value;
 };
-// const formatter = (row: Agent, column: TableColumnCtx<Agent>) => {
-//   return row.dept;
-// };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -56,10 +51,6 @@ const showData = async () => {
       const userNum = users.length;
       const msg = `目前資料庫中共有${userNum}位使用者。`;
       console.log("取得使用者資料成功：", users, msg);
-      // users.forEach((user) => {
-      //   user.id = parseInt(user.id);
-      // });
-      console.log("取得使用者資料成功after parseInt：", typeof users[0].id);
 
       //https://juejin.cn/post/7266986461102997539
       //動態數據渲染el-table時，default-sort會失效
@@ -68,13 +59,9 @@ const showData = async () => {
         agentlist.value = users;
         console.log(agentlist.value);
         await nextTick();
-        // sortTable();
         tableRef.value?.sort("id", "descending");
         loading.value = false;
       }, 200);
-      // console.log("showData done.");
-
-      // tableRef.value?.sort("id", "ascending");
     })
     .catch((error) => {
       console.error("取得使用者資料失敗：", error);
@@ -87,7 +74,15 @@ const addone = async (data) => {
     .then((users) => {
       console.log("取得使用者資料成功：", users);
       console.log("取得使用者資料成功：", users.length.toString());
-      addAgent(db, data, (users.length + 1).toString());
+      const maxID = users.reduce(
+        (max, obj) => {
+          return obj.id > max ? obj.id : max;
+        },
+        users.length > 0 ? users[0].id : null
+      );
+      // console.log("new user id=", (maxID + 1).toString());
+
+      addAgent(db, data, (maxID + 1).toString());
       showData();
       // sortTable();
     })
@@ -95,18 +90,46 @@ const addone = async (data) => {
       console.error("取得使用者資料失敗：", error);
     });
 };
+const updateone = async (data) => {
+  getAllAgents(db)
+    .then((users) => {
+      // 找到data.id=25的是第幾個user
+      let index = -1;
+      users.forEach((obj, i) => {
+        if (obj.id === data.id) {
+          index = i;
+        }
+      });
 
+      // 根据查找结果输出结果
+      if (index !== -1) {
+        console.log("ID为7的物件在数组中的索引位置是：" + index);
+      } else {
+        console.log("未找到ID为7的物件。");
+      }
+      let ind = index.toString();
+      updateAgent(db, data, ind);
+      console.log("update done.", ind);
+
+      showData();
+      // sortTable();
+    })
+    .catch((error) => {
+      console.error("取得使用者資料失敗：", error);
+    });
+  // addAgent(db, data, (users.length + 1).toString());
+};
 // TODO: 列表渲染
 // 聲明響應式list > 調用接口獲取數據 > 後端數據賦值給list > 綁訂到table組件
-const list = ref([]);
-const getList = async () => {
-  const res = await axios.get("/list");
-  console.log(res);
-  list.value = res.data;
-};
+// const list = ref([]);
+// const getList = async () => {
+//   const res = await axios.get("/list");
+//   console.log(res);
+//   list.value = res.data;
+// };
 
 onMounted(() => {
-  getList();
+  // getList();
   showData();
   tableRef.value?.sort("id", "ascending");
 });
@@ -160,6 +183,11 @@ const sortID = (a, b) => a.id - b.id;
 </script>
 
 <template>
+  <el-row justify="center" class="todo">
+    <div>
+      <progressView></progressView>
+    </div>
+  </el-row>
   <div class="app">
     <div class="btnArea">
       <el-button @click="addNewAgent" type="primary" plain>Add agent</el-button>
@@ -255,7 +283,7 @@ const sortID = (a, b) => a.id - b.id;
       </el-table-column>
     </el-table>
   </div>
-  <Edit ref="editRef" @on-update="getList" @on-create="addone" />
+  <Edit ref="editRef" @on-update="updateone" @on-create="addone" />
   <!-- <Test></Test> -->
 </template>
 
@@ -265,6 +293,10 @@ const sortID = (a, b) => a.id - b.id;
 }
 .app {
   width: 980px;
-  margin: 100px auto;
+  margin: 20px auto;
+}
+.todo {
+  width: 600px;
+  margin: 50px auto;
 }
 </style>

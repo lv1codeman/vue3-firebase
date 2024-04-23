@@ -27,48 +27,64 @@ const form = ref({
 const create = (row) => {
   eventType.value = "create";
   dialogVisible.value = true;
-  form.value.id =
-    form.value.dept =
-    form.value.deptFullName =
-    form.value.college =
-    form.value.collegeFullName =
-    form.value.agent =
-    form.value.agentEmail =
-    form.value.agentExt =
-    form.value.curriAgent =
-    form.value.curriAgentEmail =
-    form.value.curriAgentExt =
+  ruleForm.dept =
+    ruleForm.deptFullName =
+    ruleForm.college =
+    ruleForm.collegeFullName =
+    ruleForm.agent =
+    ruleForm.agentEmail =
+    ruleForm.agentExt =
+    ruleForm.curriAgent =
+    ruleForm.curriAgentEmail =
+    ruleForm.curriAgentExt =
       "";
 };
-
+const updateAgentID = ref(null);
 const open = (row) => {
   console.log(row);
+  updateAgentID.value = row.id;
   eventType.value = "update";
-  form.value.id = row.id;
-  form.value.dept = row.dept;
-  form.value.deptFullName = row.deptFullName;
-  form.value.college = row.college;
-  form.value.collegeFullName = row.collegeFullName;
-  form.value.agent = row.agent;
-  form.value.agentEmail = row.agentEmail;
-  form.value.agentExt = row.agentExt;
-  form.value.curriAgent = row.curriAgent;
-  form.value.curriAgentEmail = row.curriAgentEmail;
-  form.value.curriAgentExt = row.curriAgentExt;
+  ruleForm.dept = row.dept;
+  ruleForm.deptFullName = row.deptFullName;
+  ruleForm.college = row.college;
+  ruleForm.collegeFullName = row.collegeFullName;
+  ruleForm.agent = row.agent;
+  ruleForm.agentEmail = row.agentEmail;
+  ruleForm.agentExt = row.agentExt;
+  ruleForm.curriAgent = row.curriAgent;
+  ruleForm.curriAgentEmail = row.curriAgentEmail;
+  ruleForm.curriAgentExt = row.curriAgentExt;
 
   dialogVisible.value = true;
 };
 
 const emit = defineEmits(["on-update", "on-create"]);
-const onUpdate = async () => {
-  // await axios.patch(`/edit/${form.value.id}`, {
-  //   name: form.value.name,
-  //   place: form.value.place,
-  // });
-  console.log(ruleForm.dept);
-  dialogVisible.value = false;
-
-  // emit("on-update");
+const onUpdate = async (formEl: FormInstance | undefined) => {
+  console.log("onUpdate event start...");
+  if (!formEl) return;
+  await formEl.validate((valid, fields) => {
+    if (valid) {
+      console.log("submit! packing res for App.vue to do addone...");
+      const res = {
+        id: updateAgentID.value,
+        dept: ruleForm.dept,
+        deptFullName: ruleForm.deptFullName,
+        college: ruleForm.college,
+        collegeFullName: ruleForm.collegeFullName,
+        agent: ruleForm.agent,
+        agentEmail: ruleForm.agentEmail,
+        agentExt: ruleForm.agentExt,
+        curriAgent: ruleForm.curriAgent,
+        curriAgentEmail: ruleForm.curriAgentEmail,
+        curriAgentExt: ruleForm.curriAgentExt,
+      };
+      emit("on-update", res);
+      dialogVisible.value = false;
+    } else {
+      console.log("error submit!", fields);
+      dialogVisible.value = true;
+    }
+  });
 };
 
 const onCreate = async (formEl: FormInstance | undefined) => {
@@ -89,8 +105,6 @@ const onCreate = async (formEl: FormInstance | undefined) => {
         curriAgentEmail: ruleForm.curriAgentEmail,
         curriAgentExt: ruleForm.curriAgentExt,
       };
-      console.log("ruleForm.dept=", ruleForm.dept);
-      console.log("res=", res);
       emit("on-create", res);
       dialogVisible.value = false;
     } else {
@@ -276,7 +290,9 @@ const resetForm = (formEl: FormInstance | undefined) => {
           >取消</el-button
         >
         <span v-if="eventType == 'update'">
-          <el-button type="primary" @click="onUpdate">確認</el-button>
+          <el-button type="primary" @click="onUpdate(ruleFormRef)"
+            >更新</el-button
+          >
         </span>
         <span v-else>
           <el-button type="primary" @click="onCreate(ruleFormRef)"
