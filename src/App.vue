@@ -62,7 +62,7 @@ const showData = async () => {
         await nextTick();
         tableRef.value?.sort("id", "descending");
         loading.value = false;
-      }, 200);
+      }, 500);
     })
     .catch((error) => {
       console.error("取得使用者資料失敗：", error);
