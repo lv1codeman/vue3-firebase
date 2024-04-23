@@ -4,6 +4,7 @@ import Edit from "./components/Edit.vue";
 import Test from "./components/Test.vue";
 import progressView from "./components/progressView.vue";
 import axios from "axios";
+import ClipboardJS from "clipboard";
 import { onMounted } from "vue";
 
 import firebaseConfig from "./assets/js/getFirebaseConfig";
@@ -156,6 +157,72 @@ const onEdit = (row) => {
   console.log(editRef.value);
 };
 
+const onCopyCrtl = (row) => {
+  dataCopy.value =
+    "id: " +
+    row.id +
+    "\n" +
+    "學院: " +
+    row.college +
+    "\n" +
+    "學院全名: " +
+    row.collegeFullName +
+    "\n" +
+    "系所: " +
+    row.dept +
+    "\n" +
+    "系所全名: " +
+    row.deptFullName +
+    "\n" +
+    "承辦人: " +
+    row.agent +
+    "\n" +
+    "承辦人Email: " +
+    row.agentEmail +
+    "\n" +
+    "承辦人分機: " +
+    row.agentExt +
+    "\n" +
+    "課務組承辦人: " +
+    row.curriAgent +
+    "\n" +
+    "課務組承辦人Email: " +
+    row.curriAgentEmail +
+    "\n" +
+    "課務組承辦人分機: " +
+    row.curriAgentExt;
+  // (editRef.value as any).open(row);
+  console.log(row);
+  alert("複製完成\n\n" + dataCopy.value);
+};
+const onCopy = (row) => {
+  dataCopy.value =
+    row.id +
+    "\n" +
+    row.college +
+    "\n" +
+    row.collegeFullName +
+    "\n" +
+    row.dept +
+    "\n" +
+    row.deptFullName +
+    "\n" +
+    row.agent +
+    "\n" +
+    row.agentEmail +
+    "\n" +
+    row.agentExt +
+    "\n" +
+    row.curriAgent +
+    "\n" +
+    row.curriAgentEmail +
+    "\n" +
+    row.curriAgentExt;
+  // (editRef.value as any).open(row);
+  console.log(row);
+  alert("複製完成\n\n" + dataCopy.value);
+};
+
 const addNewAgent = () => {
   console.log("add agent clicked.");
   (editRef.value as any).create();
@@ -180,6 +247,8 @@ const sortTable = async () => {
 };
 
 const sortID = (a, b) => a.id - b.id;
+new ClipboardJS(".copyBtn");
+const dataCopy = ref("");
 </script>
 
 <template>
@@ -273,8 +342,17 @@ const sortID = (a, b) => a.id - b.id;
         width="140px"
         prop="curriAgentExt"
       ></el-table-column>
-      <el-table-column fixed="right" label="操作" width="120">
+      <el-table-column fixed="right" label="操作" width="155">
         <template #default="{ row, column, $index }">
+          <el-button
+            class="copyBtn"
+            type="primary"
+            link
+            @click.exact="onCopy(row)"
+            @click.ctrl.exact="onCopyCrtl(row)"
+            :data-clipboard-text="dataCopy"
+            >複製</el-button
+          >
           <el-button type="primary" link @click="onEdit(row)">编辑</el-button>
           <el-button type="danger" link @click="onDelete(row, column, $index)"
             >删除</el-button
