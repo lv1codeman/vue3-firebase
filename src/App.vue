@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import { ref, watch, nextTick } from "vue";
+import { h } from "vue";
+import { ElMessage } from "element-plus";
 import Edit from "./components/Edit.vue";
 import Test from "./components/Test.vue";
 import progressView from "./components/progressView.vue";
@@ -157,6 +159,10 @@ const onEdit = (row) => {
   console.log(editRef.value);
 };
 
+const copyMsg = () => {
+  ElMessage("已複製到剪貼簿");
+};
+
 const onCopyCrtl = (row) => {
   dataCopy.value =
     "id: " +
@@ -193,7 +199,15 @@ const onCopyCrtl = (row) => {
     row.curriAgentExt;
   // (editRef.value as any).open(row);
   console.log(row);
-  alert("複製完成\n\n" + dataCopy.value);
+  // alert("複製完成\n\n" + dataCopy.value);
+  ElMessage({
+    showClose: true,
+    type: "info",
+    message: h("p", { style: "line-height: 1; font-size: 14px" }, [
+      h("b", { style: "color: teal" }, "含有說明的資料"),
+      h("span", null, "已複製到剪貼簿"),
+    ]),
+  });
 };
 const onCopy = (row) => {
   dataCopy.value =
@@ -220,7 +234,15 @@ const onCopy = (row) => {
     row.curriAgentExt;
   // (editRef.value as any).open(row);
   console.log(row);
-  alert("複製完成\n\n" + dataCopy.value);
+  // alert("複製完成\n\n" + dataCopy.value);
+  ElMessage({
+    showClose: true,
+    type: "info",
+    message: h("p", { style: "line-height: 1; font-size: 14px" }, [
+      h("b", { style: "color: teal" }, "純值資料"),
+      h("span", null, "已複製到剪貼簿"),
+    ]),
+  });
 };
 
 const addNewAgent = () => {
@@ -260,7 +282,7 @@ const dataCopy = ref("");
   <div class="app">
     <div class="btnArea">
       <el-button @click="addNewAgent" type="primary" plain>Add agent</el-button>
-      <el-button @click="sortTable" type="primary" plain>sortTable</el-button>
+      <!-- <el-button @click="sortTable" type="primary" plain>sortTable</el-button> -->
       <el-button @click="showData" type="primary" plain>showData</el-button>
     </div>
 
@@ -271,7 +293,7 @@ const dataCopy = ref("");
       style="width: 100%"
       border
       stripe
-      height="500"
+      height="400"
     >
       <el-table-column
         fixed
@@ -344,15 +366,23 @@ const dataCopy = ref("");
       ></el-table-column>
       <el-table-column fixed="right" label="操作" width="155">
         <template #default="{ row, column, $index }">
-          <el-button
-            class="copyBtn"
-            type="primary"
-            link
-            @click.exact="onCopy(row)"
-            @click.ctrl.exact="onCopyCrtl(row)"
-            :data-clipboard-text="dataCopy"
-            >複製</el-button
+          <el-tooltip
+            class="box-item"
+            effect="dark"
+            content="Ctrl+左鍵:複製含有說明的資料"
+            placement="top"
+            :visible="visible"
           >
+            <el-button
+              class="copyBtn"
+              type="primary"
+              link
+              @click.exact="onCopy(row)"
+              @click.ctrl.exact="onCopyCrtl(row)"
+              :data-clipboard-text="dataCopy"
+              >複製</el-button
+            >
+          </el-tooltip>
           <el-button type="primary" link @click="onEdit(row)">编辑</el-button>
           <el-button type="danger" link @click="onDelete(row, column, $index)"
             >删除</el-button

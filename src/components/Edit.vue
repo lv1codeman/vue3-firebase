@@ -3,7 +3,7 @@
 import { reactive, ref } from "vue";
 import type { ComponentSize, FormInstance, FormRules } from "element-plus";
 import { addAgent } from "../assets/js/setAgent";
-import { reg_4_digit } from "../assets/js/regex.js";
+import { reg_4_digit, reg_number_1_to_4 } from "../assets/js/regex.js";
 import axios from "axios";
 // 弹框开关
 const eventType = ref("");
@@ -26,7 +26,6 @@ const form = ref({
 
 const create = (row) => {
   eventType.value = "create";
-  dialogVisible.value = true;
   ruleForm.dept =
     ruleForm.deptFullName =
     ruleForm.college =
@@ -38,6 +37,8 @@ const create = (row) => {
     ruleForm.curriAgentEmail =
     ruleForm.curriAgentExt =
       "";
+  dialogVisible.value = true;
+  resetForm(ruleFormRef.value);
 };
 const updateAgentID = ref(null);
 const open = (row) => {
@@ -179,11 +180,13 @@ const rules = reactive<FormRules<RuleForm>>({
     },
   ],
   curriAgent: [
-    { required: true, message: "請輸入課務組承辦人", trigger: "blur" },
+    {
+      message: "請輸入課務組承辦人",
+      trigger: "change",
+    },
   ],
   curriAgentEmail: [
     {
-      required: true,
       type: "email",
       message: "不符合email格式",
       trigger: "blur",
@@ -191,7 +194,6 @@ const rules = reactive<FormRules<RuleForm>>({
   ],
   curriAgentExt: [
     {
-      required: true,
       pattern: reg_4_digit,
       message: "請輸入4位數數字",
       trigger: "blur",
@@ -213,6 +215,27 @@ const resetForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   formEl.resetFields();
 };
+
+const curriAgentChanged = () => {
+  switch (ruleForm.curriAgent) {
+    case "黃思嘉":
+      ruleForm.curriAgentEmail = "loria@cc.ncue.edu.tw";
+      ruleForm.curriAgentExt = "5622";
+      break;
+    case "鍾博凱":
+      ruleForm.curriAgentEmail = "s26153@cc.ncue.edu.tw";
+      ruleForm.curriAgentExt = "5626";
+      break;
+    case "黃嘉玲":
+      ruleForm.curriAgentEmail = "chialing@cc.ncue.edu.tw";
+      ruleForm.curriAgentExt = "5623";
+      break;
+    case "范豈瑗":
+      ruleForm.curriAgentEmail = "ang3188@cc.ncue.edu.tw";
+      ruleForm.curriAgentExt = "5624";
+      break;
+  }
+};
 </script>
 
 <template>
@@ -231,7 +254,11 @@ const resetForm = (formEl: FormInstance | undefined) => {
       >
         <!-- status-icon -->
         <el-form-item label="系所" prop="dept">
-          <el-input placeholder="請輸入系所" v-model="ruleForm.dept" />
+          <el-input
+            placeholder="請輸入系所"
+            v-model="ruleForm.dept"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="系所全名" prop="deptFullName">
           <el-input
@@ -240,12 +267,17 @@ const resetForm = (formEl: FormInstance | undefined) => {
           />
         </el-form-item>
         <el-form-item label="學院" prop="college">
-          <el-input placeholder="請輸入學院" v-model="ruleForm.college" />
+          <el-input
+            placeholder="請輸入學院"
+            v-model="ruleForm.college"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="學院全名" prop="collegeFullName">
           <el-input
             placeholder="請輸入學院全名"
             v-model="ruleForm.collegeFullName"
+            clearable
           />
         </el-form-item>
         <el-form-item label="承辦人" prop="agent">
@@ -263,22 +295,32 @@ const resetForm = (formEl: FormInstance | undefined) => {
             v-model="ruleForm.agentExt"
           />
         </el-form-item>
+
         <el-form-item label="課務組承辦人" prop="curriAgent">
-          <el-input
-            placeholder="請輸入課務組承辦人"
+          <el-select
             v-model="ruleForm.curriAgent"
-          />
+            placeholder="請選擇課務組承辦人"
+            @change="curriAgentChanged"
+          >
+            <!-- <el-option disable label="請選擇課務組承辦人" value="0" /> -->
+            <el-option label="黃思嘉" value="黃思嘉" />
+            <el-option label="鍾博凱" value="鍾博凱" />
+            <el-option label="黃嘉玲" value="黃嘉玲" />
+            <el-option label="范豈瑗" value="范豈瑗" />
+          </el-select>
         </el-form-item>
         <el-form-item label="課務組承辦人Email" prop="curriAgentEmail">
           <el-input
-            placeholder="請輸入課務組承辦人Email"
+            placeholder="請選擇課務組承辦人"
             v-model="ruleForm.curriAgentEmail"
+            disabled
           />
         </el-form-item>
         <el-form-item label="課務組承辦人分機" prop="curriAgentExt">
           <el-input
-            placeholder="請輸入課務組承辦人分機"
+            placeholder="請選擇課務組承辦人"
             v-model="ruleForm.curriAgentExt"
+            disabled
           />
         </el-form-item>
       </el-form>
@@ -286,8 +328,9 @@ const resetForm = (formEl: FormInstance | undefined) => {
     <template #footer>
       <span class="dialog-footer">
         <!-- @click="dialogVisible = false" -->
+        <el-button @click="clearForm(ruleFormRef)">返回</el-button>
         <el-button class="spacer" @click="resetForm(ruleFormRef)"
-          >取消</el-button
+          >重設</el-button
         >
         <span v-if="eventType == 'update'">
           <el-button type="primary" @click="onUpdate(ruleFormRef)"
@@ -306,7 +349,7 @@ const resetForm = (formEl: FormInstance | undefined) => {
 
 <style scoped>
 .spacer {
-  margin-right: 10px;
+  margin-right: 12px;
 }
 :deep(.el-form-item) {
   justify-content: center;
@@ -325,5 +368,8 @@ const resetForm = (formEl: FormInstance | undefined) => {
 
 :deep(.el-input__wrapper) {
   flex-grow: 0.1;
+}
+:deep(.el-select__wrapper) {
+  width: 196px;
 }
 </style>

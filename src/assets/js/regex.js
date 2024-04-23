@@ -1,4 +1,5 @@
 export const reg_4_digit = /^\d{4}$/;
+export const reg_number_1_to_4 = /^[1-4]$/;
 export const reg_email = /^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/;
 export const reg_url =
   /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
