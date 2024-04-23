@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref, watch, nextTick } from "vue";
 import Edit from "./components/Edit.vue";
+import Test from "./components/Test.vue";
 import axios from "axios";
 import { onMounted } from "vue";
 
@@ -159,14 +160,13 @@ const sortID = (a, b) => a.id - b.id;
 </script>
 
 <template>
-  <el-button @click="sortTable" type="primary" plain>sortTable</el-button>
-  <el-button @click="showData" type="primary" plain>showData</el-button>
-  <!-- @sort-change="handleDataUpdate" -->
-  <!-- sortable="custom" -->
-
-  <!-- :default-sort="defaultSort" -->
   <div class="app">
-    <el-button @click="addNewAgent" type="primary" plain>Add agent</el-button>
+    <div class="btnArea">
+      <el-button @click="addNewAgent" type="primary" plain>Add agent</el-button>
+      <el-button @click="sortTable" type="primary" plain>sortTable</el-button>
+      <el-button @click="showData" type="primary" plain>showData</el-button>
+    </div>
+
     <el-table
       ref="tableRef"
       v-loading="loading"
@@ -256,11 +256,15 @@ const sortID = (a, b) => a.id - b.id;
     </el-table>
   </div>
   <Edit ref="editRef" @on-update="getList" @on-create="addone" />
+  <!-- <Test></Test> -->
 </template>
 
 <style scoped>
+.btnArea {
+  margin-bottom: 10px;
+}
 .app {
   width: 980px;
-  margin: 20px auto;
+  margin: 100px auto;
 }
 </style>

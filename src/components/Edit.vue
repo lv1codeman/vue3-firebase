@@ -1,7 +1,9 @@
-<script setup>
+<script lang="ts" setup>
 // TODO: 编辑
-import { ref } from "vue";
+import { reactive, ref } from "vue";
+import type { ComponentSize, FormInstance, FormRules } from "element-plus";
 import { addAgent } from "../assets/js/setAgent";
+import { reg_4_digit } from "../assets/js/regex.js";
 import axios from "axios";
 // 弹框开关
 const eventType = ref("");
@@ -63,35 +65,140 @@ const onUpdate = async () => {
   //   name: form.value.name,
   //   place: form.value.place,
   // });
+  console.log(ruleForm.dept);
   dialogVisible.value = false;
 
-  emit("on-update");
+  // emit("on-update");
 };
 
-const onCreate = async () => {
+const onCreate = async (formEl: FormInstance | undefined) => {
   console.log("onCreate event start...");
-  const res = {
-    id: form.value.id,
-    dept: form.value.dept,
-    deptFullName: form.value.deptFullName,
-    college: form.value.college,
-    collegeFullName: form.value.collegeFullName,
-    agent: form.value.agent,
-    agentEmail: form.value.agentEmail,
-    agentExt: form.value.agentExt,
-    curriAgent: form.value.curriAgent,
-    curriAgentEmail: form.value.curriAgentEmail,
-    curriAgentExt: form.value.curriAgentExt,
-  };
-
-  emit("on-create", res);
-  dialogVisible.value = false;
+  if (!formEl) return;
+  await formEl.validate((valid, fields) => {
+    if (valid) {
+      console.log("submit! packing res for App.vue to do addone...");
+      const res = {
+        dept: ruleForm.dept,
+        deptFullName: ruleForm.deptFullName,
+        college: ruleForm.college,
+        collegeFullName: ruleForm.collegeFullName,
+        agent: ruleForm.agent,
+        agentEmail: ruleForm.agentEmail,
+        agentExt: ruleForm.agentExt,
+        curriAgent: ruleForm.curriAgent,
+        curriAgentEmail: ruleForm.curriAgentEmail,
+        curriAgentExt: ruleForm.curriAgentExt,
+      };
+      console.log("ruleForm.dept=", ruleForm.dept);
+      console.log("res=", res);
+      emit("on-create", res);
+      dialogVisible.value = false;
+    } else {
+      console.log("error submit!", fields);
+      dialogVisible.value = true;
+    }
+  });
 };
 
 defineExpose({
   create,
   open,
 });
+
+interface RuleForm {
+  dept: string;
+  deptFullName: string;
+  college: string;
+  collegeFullName: string;
+  agent: string;
+  agentEmail: string;
+  agentExt: string;
+  curriAgent: string;
+  curriAgentEmail: string;
+  curriAgentExt: string;
+}
+
+const formSize = ref<ComponentSize>("default");
+const ruleFormRef = ref<FormInstance>();
+const ruleForm = reactive<RuleForm>({
+  dept: "",
+  deptFullName: "",
+  college: "",
+  collegeFullName: "",
+  agent: "",
+  agentEmail: "",
+  agentExt: "",
+  curriAgent: "",
+  curriAgentEmail: "",
+  curriAgentExt: "",
+});
+const locationOptions = ["Home", "Company", "School"];
+
+// type FormRules<RuleForm> = () => {
+//   dept: "Hello";
+// };
+
+const rules = reactive<FormRules<RuleForm>>({
+  dept: [{ required: true, message: "請輸入系所全名", trigger: "blur" }],
+  deptFullName: [
+    { required: true, message: "請輸入系所全名", trigger: "blur" },
+  ],
+  college: [{ required: true, message: "請輸入學院", trigger: "blur" }],
+  collegeFullName: [
+    { required: true, message: "請輸入學院全名", trigger: "blur" },
+  ],
+  agent: [{ required: true, message: "請輸入承辦人", trigger: "blur" }],
+  agentEmail: [
+    {
+      required: true,
+      type: "email",
+      message: "不符合email格式",
+      trigger: "blur",
+    },
+  ],
+  agentExt: [
+    {
+      required: true,
+      pattern: reg_4_digit,
+      message: "請輸入4位數數字",
+      trigger: "blur",
+    },
+  ],
+  curriAgent: [
+    { required: true, message: "請輸入課務組承辦人", trigger: "blur" },
+  ],
+  curriAgentEmail: [
+    {
+      required: true,
+      type: "email",
+      message: "不符合email格式",
+      trigger: "blur",
+    },
+  ],
+  curriAgentExt: [
+    {
+      required: true,
+      pattern: reg_4_digit,
+      message: "請輸入4位數數字",
+      trigger: "blur",
+    },
+  ],
+});
+
+const submitForm = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return;
+  await formEl.validate((valid, fields) => {
+    if (valid) {
+      console.log("submit!");
+    } else {
+      console.log("error submit!", fields);
+    }
+  });
+};
+const resetForm = (formEl: FormInstance | undefined) => {
+  if (!formEl) return;
+  formEl.resetFields();
+};
 </script>
 
 <template>
@@ -101,61 +208,80 @@ defineExpose({
     width="30%"
   >
     <div>
-      <el-form>
-        <el-form-item label="系所">
-          <el-input placeholder="請輸入系所" v-model="form.dept" />
+      <el-form
+        ref="ruleFormRef"
+        :model="ruleForm"
+        :rules="rules"
+        class="demo-ruleForm"
+        :size="formSize"
+      >
+        <!-- status-icon -->
+        <el-form-item label="系所" prop="dept">
+          <el-input placeholder="請輸入系所" v-model="ruleForm.dept" />
         </el-form-item>
-        <el-form-item label="系所全名">
-          <el-input placeholder="請輸入系所全名" v-model="form.deptFullName" />
+        <el-form-item label="系所全名" prop="deptFullName">
+          <el-input
+            placeholder="請輸入系所全名"
+            v-model="ruleForm.deptFullName"
+          />
         </el-form-item>
-        <el-form-item label="學院">
-          <el-input placeholder="請輸入學院" v-model="form.college" />
+        <el-form-item label="學院" prop="college">
+          <el-input placeholder="請輸入學院" v-model="ruleForm.college" />
         </el-form-item>
-        <el-form-item label="學院全名">
+        <el-form-item label="學院全名" prop="collegeFullName">
           <el-input
             placeholder="請輸入學院全名"
-            v-model="form.collegeFullName"
+            v-model="ruleForm.collegeFullName"
           />
         </el-form-item>
-        <el-form-item label="承辦人">
-          <el-input placeholder="請輸入承辦人" v-model="form.agent" />
+        <el-form-item label="承辦人" prop="agent">
+          <el-input placeholder="請輸入承辦人" v-model="ruleForm.agent" />
         </el-form-item>
-        <el-form-item label="承辦人Email">
-          <el-input placeholder="請輸入承辦人Email" v-model="form.agentEmail" />
+        <el-form-item label="承辦人Email" prop="agentEmail">
+          <el-input
+            placeholder="請輸入承辦人Email"
+            v-model="ruleForm.agentEmail"
+          />
         </el-form-item>
-        <el-form-item label="承辦人分機">
-          <el-input placeholder="請輸入承辦人分機" v-model="form.agentExt" />
+        <el-form-item label="承辦人分機" prop="agentExt">
+          <el-input
+            placeholder="請輸入承辦人分機"
+            v-model="ruleForm.agentExt"
+          />
         </el-form-item>
-        <el-form-item label="課務組承辦人">
+        <el-form-item label="課務組承辦人" prop="curriAgent">
           <el-input
             placeholder="請輸入課務組承辦人"
-            v-model="form.curriAgent"
+            v-model="ruleForm.curriAgent"
           />
         </el-form-item>
-        <el-form-item label="課務組承辦人Email">
+        <el-form-item label="課務組承辦人Email" prop="curriAgentEmail">
           <el-input
             placeholder="請輸入課務組承辦人Email"
-            v-model="form.curriAgentEmail"
+            v-model="ruleForm.curriAgentEmail"
           />
         </el-form-item>
-        <el-form-item label="課務組承辦人分機">
+        <el-form-item label="課務組承辦人分機" prop="curriAgentExt">
           <el-input
             placeholder="請輸入課務組承辦人分機"
-            v-model="form.curriAgentExt"
+            v-model="ruleForm.curriAgentExt"
           />
         </el-form-item>
       </el-form>
     </div>
     <template #footer>
       <span class="dialog-footer">
-        <el-button class="spacer" @click="dialogVisible = false"
+        <!-- @click="dialogVisible = false" -->
+        <el-button class="spacer" @click="resetForm(ruleFormRef)"
           >取消</el-button
         >
         <span v-if="eventType == 'update'">
           <el-button type="primary" @click="onUpdate">確認</el-button>
         </span>
         <span v-else>
-          <el-button type="primary" @click="onCreate">新增</el-button>
+          <el-button type="primary" @click="onCreate(ruleFormRef)"
+            >新增</el-button
+          >
         </span>
       </span>
     </template>
@@ -177,9 +303,9 @@ defineExpose({
   flex: 1 0;
   padding: 0 0 0 12px;
 }
-/* .el-form-item__content >>> .el-input__wrapper {
-  flex-grow: 0.1;
-} */
+:deep(.el-form-item__error) {
+  padding: 0 0 0 12px;
+}
 
 :deep(.el-input__wrapper) {
   flex-grow: 0.1;
