@@ -49,6 +49,8 @@ const db = getFirestore(app);
 
 const agentlist = ref([]);
 const showData = async () => {
+  console.log("showdata start...");
+
   getAllAgents(db)
     .then((users) => {
       const userNum = users.length;
@@ -63,8 +65,8 @@ const showData = async () => {
         console.log(agentlist.value);
         await nextTick();
         tableRef.value?.sort("id", "descending");
-        loading.value = false;
-      }, 500);
+      }, 200);
+      loading.value = false;
     })
     .catch((error) => {
       console.error("取得使用者資料失敗：", error);
@@ -72,6 +74,7 @@ const showData = async () => {
 };
 
 const addone = async (data) => {
+  loading.value = true;
   console.log("create done.", data);
   getAllAgents(db)
     .then((users) => {
@@ -94,9 +97,11 @@ const addone = async (data) => {
     });
 };
 const updateone = async (data) => {
+  loading.value = true;
   getAllAgents(db)
     .then((users) => {
       // 找到data.id=25的是第幾個user
+
       let index = -1;
       users.forEach((obj, i) => {
         if (obj.id === data.id) {
@@ -134,15 +139,13 @@ const updateone = async (data) => {
 onMounted(() => {
   // getList();
   showData();
-  tableRef.value?.sort("id", "ascending");
+  // tableRef.value?.sort("id", "ascending");
 });
 // TODO: 删除功能
 // 獲取當前行的id > 通過id調用刪除接口 > 更新最新的列表
 
 const onDelete = async (row, column, index) => {
-  console.log(row);
-  console.log(column);
-  console.log(index);
+  loading.value = true;
 
   await deleteDoc(doc(db, "agents", row.id.toString()));
   showData();
@@ -271,6 +274,34 @@ const sortTable = async () => {
 const sortID = (a, b) => a.id - b.id;
 new ClipboardJS(".copyBtn");
 const dataCopy = ref("");
+
+const overlay = ref(null);
+const loadingIcon = ref(null);
+
+const triggerLoading = () => {
+  showLoading();
+
+  // 模拟页面加载过程
+  setTimeout(() => {
+    hideLoading();
+  }, 3000);
+};
+
+const showLoading = () => {
+  document.documentElement.style.userSelect = "none";
+  overlay.value.style.display = "block";
+  document.documentElement.style.cursor = "wait";
+  loadingIcon.value.style.display = "block";
+  document.documentElement.style.pointerEvents = "none";
+};
+
+const hideLoading = () => {
+  overlay.value.style.display = "none";
+  document.documentElement.style.cursor = "default";
+  loadingIcon.value.style.display = "none";
+  document.documentElement.style.pointerEvents = "auto";
+  document.documentElement.style.userSelect = "auto";
+};
 </script>
 
 <template>
@@ -280,9 +311,13 @@ const dataCopy = ref("");
     </div>
   </el-row>
   <div class="app">
+    <div id="overlay" ref="overlay"></div>
+    <div id="loading-icon" ref="loadingIcon"></div>
     <div class="btnArea">
       <el-button @click="addNewAgent" type="primary" plain>Add agent</el-button>
-      <!-- <el-button @click="sortTable" type="primary" plain>sortTable</el-button> -->
+      <el-button @click="triggerLoading" type="primary" plain
+        >triggerLoading</el-button
+      >
       <el-button @click="showData" type="primary" plain>showData</el-button>
     </div>
 
@@ -371,7 +406,6 @@ const dataCopy = ref("");
             effect="dark"
             content="Ctrl+左鍵:複製含有說明的資料"
             placement="top"
-            :visible="visible"
           >
             <el-button
               class="copyBtn"
@@ -406,5 +440,49 @@ const dataCopy = ref("");
 .todo {
   width: 600px;
   margin: 50px auto;
+}
+
+#overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+/* 加载动画样式 */
+#loading-icon {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+}
+
+/* 加载动画的样式 */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 加载动画的外观 */
+#loading-icon::after {
+  content: "";
+  width: 50px;
+  height: 50px;
+  border: 5px solid #fff; /* 将线条宽度增加到 5px */
+  border-top: 5px solid transparent;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: spin 1s linear infinite;
 }
 </style>
