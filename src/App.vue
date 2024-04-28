@@ -19,6 +19,11 @@ import { doc, deleteDoc } from "firebase/firestore";
 
 import type { TableColumnCtx, TableInstance } from "element-plus";
 
+import { useCounterStore } from "@/stores/counter.js";
+
+const counterStore = useCounterStore();
+console.log(counterStore);
+
 interface Agent {
   id: string;
   dept: string;
@@ -319,6 +324,10 @@ const hideLoading = () => {
         >triggerLoading</el-button
       >
       <el-button @click="showData" type="primary" plain>showData</el-button>
+      <el-button @click="counterStore.increment" type="primary" plain>{{
+        counterStore.count
+      }}</el-button>
+      {{ counterStore.doubleCount }}
     </div>
 
     <el-table

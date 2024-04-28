@@ -13,6 +13,7 @@
     "clipboard": "^2.0.11",
     "element-plus": "^2.7.1",
     "firebase": "^10.11.0",
+    "pinia": "^2.1.7",
     "vue": "^3.2.41"
   },
   "devDependencies": {
